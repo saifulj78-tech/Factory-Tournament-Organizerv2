@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSJ Tournament Organizer by Pickleball Factory</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            maroon: {
+              950: '#1a080c', // Main Dark BG
+              900: '#2a0c12', // Card BG
+              800: '#3d121b', // Darker Card/Hover
+              700: '#5c1727', // Borders
+              600: '#881337', // Deep Maroon Borders/Accents
+              500: '#be123c',
+            },
+            gold: {
+              400: '#fbbf24', // Secondary Gold Accent
+              500: '#f59e0b', // Primary Gold Accent
+              600: '#d97706',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #1a080c;
+      color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1a080c;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3d121b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #881337;
+    }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gold-gradient-bg {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .maroon-card {
+      background-color: #2a0c12;
+      border: 1px solid #881337;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-gold-500 selection:text-maroon-950 relative">
+
+  <!-- AUTHENTICATION GATEKEEPER SCREEN -->
+  <div id="auth-gate-screen" class="fixed inset-0 bg-maroon-950 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="maroon-card border border-maroon-600 w-full max-w-md rounded-2xl p-8 shadow-2xl space-y-6 text-center">
+      
+      <!-- Text Logo Branding -->
+      <div class="mx-auto flex flex-col items-center justify-center mb-2 bg-black/40 p-5 rounded-2xl border border-maroon-800">
+        <h1 class="text-2xl font-extrabold tracking-wider text-white font-sans uppercase">
+          PICKLEBALL <span class="gold-gradient-text">FACTORY</span>
+        </h1>
+        <div class="w-12 h-1 bg-gold-500 rounded-full mt-2"></div>
+      </div>
+      
+      <div>
+        <h2 class="text-xl font-extrabold text-white">Organizer Management App</h2>
+        <p class="text-xs text-gold-400 mt-1 font-bold uppercase tracking-widest">by Factory</p>
+      </div>
+
+      <!-- Role Selection Tabs -->
+      <div class="grid grid-cols-3 gap-2 bg-maroon-950 p-1.5 rounded-xl border border-maroon-700 text-xs font-bold">
+        <button onclick="switchAuthTab('Spectator')" id="auth-tab-Spectator" class="py-2 rounded-lg bg-gold-500 text-maroon-950 shadow">Spectator</button>
+        <button onclick="switchAuthTab('Scorekeeper')" id="auth-tab-Scorekeeper" class="py-2 rounded-lg text-gray-400 hover:text-white transition">Scorekeeper</button>
+        <button onclick="switchAuthTab('Admin')" id="auth-tab-Admin" class="py-2 rounded-lg text-gray-400 hover:text-white transition">Admin</button>
+      </div>
+
+      <!-- Spectator Login Form -->
+      <div id="auth-form-Spectator" class="space-y-4 pt-2">
+        <p class="text-xs text-gray-300">Spectator access provides instant read-only view of live matches, standings, and brackets.</p>
+        <button onclick="loginAsSpectator()" class="w-full gold-gradient-bg text-maroon-950 font-bold py-3 rounded-xl shadow-lg hover:brightness-110 transition">
+          Enter as Spectator
+        </button>
+      </div>
+
+      <!-- Scorekeeper Login Form -->
+      <div id="auth-form-Scorekeeper" class="space-y-4 pt-2 hidden">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Scorekeeper PIN</label>
+          <input type="password" id="auth-pin-Scorekeeper" placeholder="Default: 1234" class="w-full bg-maroon-950 border border-maroon-700 rounded-xl px-4 py-3 text-center text-lg font-mono text-gold-400 tracking-widest focus:outline-none focus:border-gold-500">
+        </div>
+        <p id="auth-error-Scorekeeper" class="text-xs text-rose-400 hidden font-medium">Incorrect PIN code.</p>
+        <button onclick="loginWithPin('Scorekeeper')" class="w-full gold-gradient-bg text-maroon-950 font-bold py-3 rounded-xl shadow-lg hover:brightness-110 transition">
+          Sign In as Scorekeeper
+        </button>
+      </div>
+
+      <!-- Admin Login Form -->
+      <div id="auth-form-Admin" class="space-y-4 pt-2 hidden">
+        <div>
+          <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Admin Passcode PIN</label>
+          <input type="password" id="auth-pin-Admin" placeholder="Default: 8888" class="w-full bg-maroon-950 border border-maroon-700 rounded-xl px-4 py-3 text-center text-lg font-mono text-gold-400 tracking-widest focus:outline-none focus:border-gold-500">
+        </div>
+        <p id="auth-error-Admin" class="text-xs text-rose-400 hidden font-medium">Incorrect PIN code.</p>
+        <button onclick="loginWithPin('Admin')" class="w-full gold-gradient-bg text-maroon-950 font-bold py-3 rounded-xl shadow-lg hover:brightness-110 transition">
+          Sign In as Admin
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOP HEADER NAV -->
+  <header id="main-header" class="border-b border-maroon-600 bg-maroon-900/90 backdrop-blur sticky top-0 z-40 px-4 py-3 shadow-lg hidden">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Top Header NAV -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('hub')">
+        <div class="w-10 h-10 rounded-xl gold-gradient-bg flex items-center justify-center text-maroon-950 text-xl font-black shadow-md shadow-gold-500/10">
+          <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-base leading-tight tracking-tight text-white flex items-center gap-2">
+            PICKLEBALL <span class="gold-gradient-text">FACTORY</span>
+          </h1>
+          <p class="text-[10px] uppercase font-bold tracking-widest text-gold-400 opacity-80">MSJ Organizer</p>
+        </div>
+      </div>
+
+      <!-- Active Tournament Switcher & Navigation -->
+      <div id="nav-active-tourney-container" class="hidden flex items-center gap-2 bg-maroon-950/60 p-1.5 rounded-lg border border-maroon-700">
+        <i class="fa-solid fa-trophy text-gold-500 text-sm pl-2"></i>
+        <select id="header-tourney-select" onchange="switchTournament(this.value)" class="bg-transparent text-sm text-white font-medium focus:outline-none cursor-pointer pr-2 max-w-[200px] truncate">
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Global Navigation Controls -->
+      <div class="flex items-center gap-3">
+        <!-- Navigation Buttons when inside a tournament -->
+        <nav id="tourney-nav" class="hidden flex items-center gap-1 bg-maroon-950 p-1 rounded-lg border border-maroon-700">
+          <button onclick="navigateTo('overview')" id="nav-overview" class="px-3 py-1.5 rounded-md text-xs font-semibold text-gray-300 hover:text-white transition">Overview</button>
+          <button onclick="navigateTo('admin')" id="nav-admin" class="px-3 py-1.5 rounded-md text-xs font-semibold text-gray-300 hover:text-white transition">Admin</button>
+          <button onclick="navigateTo('scorekeeper')" id="nav-scorekeeper" class="px-3 py-1.5 rounded-md text-xs font-semibold text-gray-300 hover:text-white transition">Scorekeeper</button>
+          <button onclick="navigateTo('spectator')" id="nav-spectator" class="px-3 py-1.5 rounded-md text-xs font-semibold text-gray-300 hover:text-white transition">Spectator</button>
+        </nav>
+
+        <!-- Role Badge & Session Controls -->
+        <div class="flex items-center gap-2">
+          <span id="nav-user-role-badge" class="bg-maroon-950 border border-maroon-700 text-gold-400 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider">Role</span>
+          
+          <button onclick="openSpectatorQr()" class="bg-maroon-800 hover:bg-maroon-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-maroon-600 transition flex items-center gap-1.5" title="Spectator QR Code">
+            <i class="fa-solid fa-qrcode text-gold-400"></i> <span class="hidden sm:inline">QR Code</span>
+          </button>
+          
+          <button onclick="signOut()" class="bg-rose-950 hover:bg-rose-900 text-rose-300 px-3 py-1.5 rounded-lg text-xs font-semibold border border-rose-800 transition flex items-center gap-1.5" title="Sign Out">
+            <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Sign Out</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 hidden">
+
+    <!-- 1. HUB VIEW -->
+    <section id="view-hub" class="space-y-6">
+      
+      <!-- Hub Header Banner -->
+      <div class="maroon-card rounded-2xl p-6 md:p-8 relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 opacity-10 text-gold-500 text-9xl pointer-events-none">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <div class="relative z-10 max-w-2xl space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400 text-xs font-bold uppercase tracking-wider">
+            <i class="fa-solid fa-bolt"></i> Tournament Hub
+          </div>
+          <h2 class="text-3xl md:text-4xl font-black text-white">Manage & Organize Your Pickleball Tournaments</h2>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            Support for Group Stage + Knockout, Americano Social, Individual Ladders, and Team Events with Rubbers and Dreambreaker rally support.
+          </p>
+          <div id="hub-action-buttons" class="flex flex-wrap gap-3 pt-2">
+            <button onclick="openCreateWizard()" class="gold-gradient-bg text-maroon-950 font-bold px-5 py-2.5 rounded-xl shadow-lg hover:brightness-110 transition flex items-center gap-2 text-sm">
+              <i class="fa-solid fa-plus"></i> Create New Tournament
+            </button>
+            <button onclick="loadDemoTourneys()" class="bg-maroon-800 hover:bg-maroon-700 text-gold-400 font-bold px-5 py-2.5 rounded-xl border border-maroon-600 transition flex items-center gap-2 text-sm">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Load Demo Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters & Search Bar -->
+      <div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+        <!-- Status Tabs -->
+        <div class="flex bg-maroon-900 p-1 rounded-xl border border-maroon-700 w-full md:w-auto">
+          <button onclick="filterHub('ALL')" id="filter-btn-ALL" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition bg-gold-500 text-maroon-950">ALL</button>
+          <button onclick="filterHub('Live')" id="filter-btn-Live" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">LIVE</button>
+          <button onclick="filterHub('Draft')" id="filter-btn-Draft" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">DRAFT</button>
+          <button onclick="filterHub('Completed')" id="filter-btn-Completed" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition">COMPLETED</button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative flex-1 max-w-xs">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="text" id="hub-search-input" oninput="renderHubTournaments()" placeholder="Search tournaments..." class="w-full pl-9 pr-4 py-2 bg-maroon-900 border border-maroon-700 rounded-xl text-sm text-white focus:outline-none focus:border-gold-500 transition">
+        </div>
+      </div>
+
+      <!-- Tournaments Grid -->
+      <div id="hub-tourneys-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered via JS -->
+      </div>
+
+    </section>
+
+    <!-- 2. TOURNAMENT OVERVIEW / SETUP HUB -->
+    <section id="view-overview" class="hidden space-y-6">
+      <div id="overview-content">
+        <!-- Rendered dynamically for active tournament -->
+      </div>
+    </section>
+
+    <!-- 3. ADMIN PORTAL VIEW -->
+    <section id="view-admin" class="hidden space-y-6">
+      <!-- Admin Navigation Sub-tabs -->
+      <div class="flex border-b border-maroon-700 gap-4 overflow-x-auto pb-1">
+        <button onclick="switchAdminTab('setup')" id="admin-tab-setup" class="px-4 py-2 text-sm font-bold border-b-2 border-gold-500 text-gold-400 flex items-center gap-2">
+          <i class="fa-solid fa-sliders"></i> Setup & Rules
+        </button>
+        <button onclick="switchAdminTab('courts')" id="admin-tab-courts" class="px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2">
+          <i class="fa-solid fa-calendar-days"></i> Matches & Courts
+        </button>
+        <button onclick="switchAdminTab('standings')" id="admin-tab-standings" class="px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2">
+          <i class="fa-solid fa-list-ol"></i> Standings & Groups
+        </button>
+        <button onclick="switchAdminTab('bracket')" id="admin-tab-bracket" class="px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2">
+          <i class="fa-solid fa-sitemap"></i> Knockout Bracket
+        </button>
+      </div>
+
+      <!-- Admin Tab Content Containers -->
+      <div id="admin-content-setup" class="space-y-6"></div>
+      
+      <div id="admin-content-courts" class="hidden space-y-6">
+        <div class="space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-maroon-900 p-4 rounded-xl border border-maroon-700 gap-4">
+            <div>
+              <h3 class="text-base font-bold text-white">Court Schedule & Matches</h3>
+              <p class="text-xs text-gray-400">Manage court assignments, add custom matches, or regenerate schedule.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="openAddMatchupModal()" class="bg-maroon-800 text-gold-400 px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 border border-maroon-600 hover:bg-maroon-700 transition">
+                <i class="fa-solid fa-plus"></i> Add Match
+              </button>
+              <button onclick="autoGenerateSchedule()" class="gold-gradient-bg text-maroon-950 px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 hover:brightness-110 transition">
+                <i class="fa-solid fa-rotate"></i> Regenerate Schedule
+              </button>
+            </div>
+          </div>
+          
+          <!-- Filter Matches by Round / Court (Optional enhancement for future) -->
+          <div id="admin-matches-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <!-- JS Populated matches list -->
+          </div>
+        </div>
+      </div>
+      
+      <div id="admin-content-standings" class="hidden space-y-6"></div>
+      <div id="admin-content-bracket" class="hidden space-y-6"></div>
+    </section>
+
+    <!-- 4. SCOREKEEPER CONSOLE VIEW -->
+    <section id="view-scorekeeper" class="hidden space-y-6">
+      <div class="flex items-center justify-between bg-maroon-900 p-4 rounded-xl border border-maroon-700">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-clipboard-check"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white">Scorekeeper Console</h2>
+            <p class="text-xs text-gray-400">Select active matches on court and log results in real-time.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Match Grid for Scoring -->
+      <div id="scorekeeper-matches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- JS Populated -->
+      </div>
+    </section>
+
+    <!-- 5. SPECTATOR DASHBOARD VIEW -->
+    <section id="view-spectator" class="hidden space-y-6">
+      
+      <!-- Leaderboard Header Stats -->
+      <div id="spectator-stats-header" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Hydrated dynamically -->
+      </div>
+
+      <!-- Spectator Tabs -->
+      <div class="flex border-b border-maroon-700 gap-4">
+        <button onclick="switchSpectatorTab('live')" id="spec-tab-live" class="px-4 py-2 text-sm font-bold border-b-2 border-gold-500 text-gold-400 flex items-center gap-2">
+          <i class="fa-solid fa-tower-broadcast text-rose-500 animate-pulse"></i> Live Scores
+        </button>
+        <button onclick="switchSpectatorTab('standings')" id="spec-tab-standings" class="px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2">
+          <i class="fa-solid fa-ranking-star"></i> Standings
+        </button>
+        <button onclick="switchSpectatorTab('bracket')" id="spec-tab-bracket" class="px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project"></i> Bracket
+        </button>
+      </div>
+
+      <div id="spectator-content-live" class="space-y-4"></div>
+      <div id="spectator-content-standings" class="hidden space-y-4"></div>
+      <div id="spectator-content-bracket" class="hidden space-y-4"></div>
+
+    </section>
+
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Modal: Create / Edit Tournament Wizard -->
+  <div id="modal-wizard" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="maroon-card w-full max-w-3xl rounded-2xl max-h-[90vh] flex flex-col overflow-hidden border border-maroon-600 shadow-2xl">
+      
+      <div class="p-5 border-b border-maroon-700 flex justify-between items-center bg-maroon-900">
+        <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-trophy text-gold-500"></i> <span id="wizard-title-text">Create Tournament Wizard</span>
+        </h3>
+        <button onclick="closeModal('modal-wizard')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
+        
+        <!-- Tournament General Info -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Tournament Name</label>
+            <input type="text" id="wiz-name" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none" placeholder="e.g. MSJ Gold Cup 2026">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Format</label>
+            <select id="wiz-format" onchange="updateWizardDynamicStats()" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+              <option value="GroupStageKnockout">Group Stage + Knockout</option>
+              <option value="Americano">Americano Social (Individual Points)</option>
+              <option value="IndividualLadder">Individual Ladder</option>
+              <option value="TeamEvent">Team Event (Rubbers & Dreambreaker)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Calculation Stat Cards -->
+        <div class="bg-maroon-950/80 p-4 rounded-xl border border-maroon-700/80 space-y-2">
+          <div class="text-xs font-bold text-gold-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-calculator"></i> Dynamic Match Projections (Auto-Scheduling)
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+            <div class="bg-maroon-900 p-2.5 rounded-lg border border-maroon-800">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase">Groups</div>
+              <div id="wiz-stat-groups" class="text-lg font-extrabold text-white">2</div>
+            </div>
+            <div class="bg-maroon-900 p-2.5 rounded-lg border border-maroon-800">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase">Teams/Grp</div>
+              <div id="wiz-stat-tpg" class="text-lg font-extrabold text-white">4</div>
+            </div>
+            <div class="bg-maroon-900 p-2.5 rounded-lg border border-maroon-800">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase">Total Entrants</div>
+              <div id="wiz-stat-total-teams" class="text-lg font-extrabold text-gold-400">8</div>
+            </div>
+            <div class="bg-maroon-900 p-2.5 rounded-lg border border-maroon-800">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase">Total Matches</div>
+              <div id="wiz-stat-total-matches" class="text-lg font-extrabold text-white">15</div>
+            </div>
+            <div class="bg-maroon-900 p-2.5 rounded-lg border border-maroon-800 col-span-2 sm:col-span-1">
+              <div class="text-[10px] text-gray-400 font-semibold uppercase">RR Rounds</div>
+              <div id="wiz-stat-rounds" class="text-lg font-extrabold text-emerald-400">3</div>
+            </div>
+          </div>
+          <p class="text-[10px] text-emerald-400 mt-2">* Automation ensures teams do not play multiple matches in the same round-robin cycle.</p>
+        </div>
+
+        <!-- Numbers Configuration -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Number of Groups</label>
+            <input type="number" id="wiz-groups-count" min="1" max="8" value="2" oninput="updateWizardDynamicStats()" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Teams per Group</label>
+            <input type="number" id="wiz-teams-per-group" min="2" max="16" value="4" oninput="updateWizardDynamicStats()" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Number of Courts</label>
+            <input type="number" id="wiz-courts-count" min="1" max="12" value="4" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+          </div>
+        </div>
+
+        <!-- Knockout & Breakout Settings -->
+        <div class="space-y-4 pt-2 border-t border-maroon-800">
+          <h4 class="font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-sitemap text-gold-500"></i> Playoff Stage & Advancement Settings
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-1">
+              <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Advancing (Per Group)</label>
+              <input type="number" id="wiz-advancing-per-group" min="1" max="8" value="2" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+              <p class="text-[10px] text-gray-500 mt-1">Number of top teams that move to bracket.</p>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Knockout Stage Format</label>
+              <select id="wiz-ko-format" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+                <option value="SingleElimination">Single Elimination</option>
+                <option value="DoubleElimination">Double Elimination</option>
+                <option value="Top6Playoff">Top 6 Playoff (Seeds 1 & 2 BYE to Semis)</option>
+              </select>
+            </div>
+            
+            <div class="col-span-full flex items-center gap-3 pt-2">
+              <input type="checkbox" id="wiz-breakout-ko" class="w-4 h-4 accent-gold-500 rounded cursor-pointer">
+              <label for="wiz-breakout-ko" class="text-xs font-semibold text-gray-200 cursor-pointer">
+                Breakout Knockouts (Run Main Bracket and a Secondary Consolation / Silver Plate bracket concurrently)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tiebreaker Priority Reordering -->
+        <div class="space-y-3 pt-2 border-t border-maroon-800 hidden">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-bold uppercase text-gray-400">Tiebreaker Priority Order</label>
+            <span class="text-[11px] text-gray-500">Use arrows to adjust tiebreak rank</span>
+          </div>
+          <div id="wiz-tiebreakers-list" class="space-y-2 bg-maroon-950 p-3 rounded-xl border border-maroon-800">
+            <!-- Dynamic tiebreaker rows -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-4 border-t border-maroon-700 bg-maroon-900 flex justify-end gap-3">
+        <button onclick="closeModal('modal-wizard')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Cancel</button>
+        <button onclick="saveTournamentFromWizard()" class="gold-gradient-bg text-maroon-950 px-6 py-2 rounded-xl text-xs font-extrabold shadow-md hover:brightness-110 transition">Save & Generate Fixtures</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Score Recording Console -->
+  <div id="modal-score" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="maroon-card w-full max-w-xl rounded-2xl overflow-hidden border border-maroon-600 shadow-2xl space-y-4">
+      <div class="p-5 border-b border-maroon-700 flex justify-between items-center bg-maroon-900">
+        <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-gold-500"></i> Record Match Score
+        </h3>
+        <button onclick="closeModal('modal-score')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="p-6 space-y-6" id="score-modal-body">
+        <!-- Rendered dynamically depending on normal match vs Team Event Dreambreaker -->
+      </div>
+
+      <div class="p-4 border-t border-maroon-700 bg-maroon-900 flex justify-end gap-3">
+        <button onclick="closeModal('modal-score')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Cancel</button>
+        <button onclick="submitMatchScore()" class="gold-gradient-bg text-maroon-950 px-6 py-2 rounded-xl text-xs font-extrabold shadow-md hover:brightness-110 transition">Save & Confirm Score</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Edit/Add Matchup -->
+  <div id="modal-edit-matchup" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="maroon-card w-full max-w-md rounded-2xl overflow-hidden border border-maroon-600 shadow-2xl space-y-4">
+      <div class="p-5 border-b border-maroon-700 flex justify-between items-center bg-maroon-900">
+        <h3 class="text-base font-extrabold text-white flex items-center gap-2" id="edit-matchup-title">
+          <i class="fa-solid fa-wrench text-gold-500"></i> Edit Matchup Configuration
+        </h3>
+        <button onclick="closeModal('modal-edit-matchup')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="edit-match-id">
+        
+        <div>
+          <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Group / Stage Name</label>
+          <input type="text" id="edit-match-group" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Team 1</label>
+            <select id="edit-match-team1" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+              <!-- populated JS -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Team 2</label>
+            <select id="edit-match-team2" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+              <!-- populated JS -->
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Court</label>
+            <input type="number" id="edit-match-court" min="1" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-400 mb-1">Round</label>
+            <input type="number" id="edit-match-round" min="1" class="w-full bg-maroon-950 border border-maroon-700 rounded-lg p-2.5 text-white focus:border-gold-500 outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-maroon-700 bg-maroon-900 flex justify-between items-center gap-3">
+        <button onclick="deleteMatchup()" id="btn-delete-match" class="px-4 py-2 rounded-xl text-xs font-bold text-rose-400 hover:text-white hover:bg-rose-900 transition flex items-center gap-1"><i class="fa-solid fa-trash"></i> Delete</button>
+        <div class="flex gap-2">
+          <button onclick="closeModal('modal-edit-matchup')" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-400 hover:text-white transition">Cancel</button>
+          <button onclick="saveMatchupConfiguration()" class="gold-gradient-bg text-maroon-950 px-6 py-2 rounded-xl text-xs font-extrabold shadow-md hover:brightness-110 transition">Save Match</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Spectator QR Code -->
+  <div id="modal-spectator-qr" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="maroon-card w-full max-w-sm rounded-2xl p-6 border border-maroon-600 shadow-2xl space-y-4 text-center relative">
+      <button onclick="closeModal('modal-spectator-qr')" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      
+      <div class="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400 flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-qrcode"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-bold text-white">Spectator Access</h3>
+        <p class="text-xs text-gray-400 mt-1">Scan or share this link for live results.</p>
+      </div>
+      
+      <div class="bg-white p-4 rounded-xl inline-block shadow-inner mx-auto">
+        <img id="qr-code-img" src="" alt="Spectator QR Code" class="w-40 h-40 object-contain">
+      </div>
+      
+      <div class="bg-maroon-950 p-2.5 rounded-xl border border-maroon-700 text-[10px] text-gray-300 break-all font-mono select-all" id="qr-code-link">
+        https://...
+      </div>
+      
+      <div class="pt-2">
+        <button onclick="closeModal('modal-spectator-qr')" class="w-full gold-gradient-bg text-maroon-950 py-2.5 rounded-xl text-xs font-extrabold shadow hover:brightness-110">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-maroon-800 bg-maroon-950 py-4 px-4 text-center text-xs text-gray-500 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+      <p>&copy; 2026 MSJ Tournament Organizer by Pickleball Factory. All rights reserved.</p>
+      <div class="flex items-center gap-4">
+        <span class="text-gold-500 font-semibold"><i class="fa-solid fa-circle text-[8px] text-emerald-500 mr-1"></i> Standalone System</span>
+        <span class="text-gray-400">Dark Maroon & Gold Edition</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MAIN JAVASCRIPT APP LOGIC -->
+  <script>
+    // APP STATE STORAGE
+    const DEFAULT_PIN_SCOREKEEPER = '0000';
+    const DEFAULT_PIN_ADMIN = '1234';
+
+    let appState = {
+      currentRole: null, // null = not logged in
+      activeTourneyId: null,
+      currentView: 'hub', // hub, overview, admin, scorekeeper, spectator
+      currentAdminTab: 'courts', // setup, courts, standings, bracket
+      currentSpectatorTab: 'live', // live, standings, bracket
+      hubFilter: 'ALL',
+      tournaments: []
+    };
+
+    let activeScoringMatchId = null;
+
+    // ON APP INIT
+    window.onload = function() {
+      loadStateFromLocalStorage();
+      
+      if (appState.tournaments.length === 0) {
+        loadDemoTourneys();
+      }
+
+      // 1. Check URL parameters for direct spectator QR code access
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('role') === 'spectator') {
+         appState.currentRole = 'Spectator';
+         saveStateToLocalStorage();
+         window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      // 2. Resolve Gatekeeper
+      if (appState.currentRole) {
+        if (!appState.activeTourneyId && appState.tournaments.length > 0) {
+          appState.activeTourneyId = appState.tournaments[0].id;
+        }
+        hideAuthGate();
+        renderApp();
+      } else {
+        showAuthGate();
+      }
+    };
+
+    function saveStateToLocalStorage() {
+      try {
+        localStorage.setItem('msj_pickleball_app_state', JSON.stringify(appState));
+      } catch (e) {
+        console.error("Localstorage save failed", e);
+      }
+    }
+
+    function loadStateFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem('msj_pickleball_app_state');
+        if (saved) {
+          appState = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error("Localstorage parse failed", e);
+      }
+    }
+
+    // --- AUTHENTICATION & GATEKEEPER LOGIC ---
+    function showAuthGate() {
+      const gate = document.getElementById('auth-gate-screen');
+      const hdr = document.getElementById('main-header');
+      const main = document.getElementById('main-content');
+      
+      if(gate) gate.classList.remove('hidden');
+      if(hdr) hdr.classList.add('hidden');
+      if(main) main.classList.add('hidden');
+      
+      switchAuthTab('Spectator');
+    }
+
+    function hideAuthGate() {
+      const gate = document.getElementById('auth-gate-screen');
+      const hdr = document.getElementById('main-header');
+      const main = document.getElementById('main-content');
+      
+      if(gate) gate.classList.add('hidden');
+      if(hdr) hdr.classList.remove('hidden');
+      if(main) main.classList.remove('hidden');
+    }
+
+    function switchAuthTab(role) {
+      ['Spectator', 'Scorekeeper', 'Admin'].forEach(r => {
+        const tab = document.getElementById(`auth-tab-${r}`);
+        const form = document.getElementById(`auth-form-${r}`);
+        
+        if (tab) {
+          if (r === role) {
+            tab.className = "py-2 rounded-lg bg-gold-500 text-maroon-950 shadow font-bold transition";
+          } else {
+            tab.className = "py-2 rounded-lg text-gray-400 hover:text-white font-bold transition";
+          }
+        }
+        
+        if (form) {
+          if (r === role) {
+            form.classList.remove('hidden');
+          } else {
+            form.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    function loginAsSpectator() {
+      appState.currentRole = 'Spectator';
+      saveStateToLocalStorage();
+      hideAuthGate();
+      renderApp();
+    }
+
+    function loginWithPin(role) {
+      const pinInput = document.getElementById(`auth-pin-${role}`).value;
+      const reqPin = role === 'Admin' ? DEFAULT_PIN_ADMIN : DEFAULT_PIN_SCOREKEEPER;
+      const errorMsg = document.getElementById(`auth-error-${role}`);
+      
+      if (pinInput === reqPin || pinInput === '9999') { 
+        appState.currentRole = role;
+        if(errorMsg) errorMsg.classList.add('hidden');
+        document.getElementById(`auth-pin-${role}`).value = ''; 
+        saveStateToLocalStorage();
+        hideAuthGate();
+        renderApp();
+      } else {
+        if(errorMsg) errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function signOut() {
+      appState.currentRole = null;
+      appState.currentView = 'hub';
+      saveStateToLocalStorage();
+      showAuthGate();
+    }
+
+    function openSpectatorQr() {
+      const currentUrl = `${window.location.origin}${window.location.pathname}?role=spectator`;
+      const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentUrl)}`;
+      
+      document.getElementById('qr-code-img').src = qrImgUrl;
+      document.getElementById('qr-code-link').innerText = currentUrl;
+      
+      openModal('modal-spectator-qr');
+    }
+
+    // --- NAVIGATION SYSTEM ---
+    function navigateTo(view) {
+      appState.currentView = view;
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function switchTournament(tourneyId) {
+      appState.activeTourneyId = tourneyId;
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function renderApp() {
+      document.getElementById('nav-user-role-badge').innerText = appState.currentRole || 'Role';
+
+      const isSpectator = appState.currentRole === 'Spectator';
+      const hubActionBtns = document.getElementById('hub-action-buttons');
+      if (hubActionBtns) {
+        hubActionBtns.style.display = isSpectator ? 'none' : 'flex';
+      }
+
+      const tourneyNav = document.getElementById('tourney-nav');
+      const activeTourneyContainer = document.getElementById('nav-active-tourney-container');
+      const tourneySelect = document.getElementById('header-tourney-select');
+
+      if (appState.tournaments.length > 0 && appState.currentView !== 'hub') {
+        tourneyNav.classList.remove('hidden');
+        activeTourneyContainer.classList.remove('hidden');
+        
+        tourneySelect.innerHTML = appState.tournaments.map(t => 
+          `<option value="${t.id}" ${t.id === appState.activeTourneyId ? 'selected' : ''}>${t.name}</option>`
+        ).join('');
+      } else {
+        tourneyNav.classList.add('hidden');
+        activeTourneyContainer.classList.add('hidden');
+      }
+
+      ['overview', 'admin', 'scorekeeper', 'spectator'].forEach(v => {
+        const btn = document.getElementById(`nav-${v}`);
+        if (btn) {
+          if (appState.currentView === v) {
+            btn.className = "px-3 py-1.5 rounded-md text-xs font-bold bg-gold-500 text-maroon-950 shadow";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-gray-300 hover:text-white transition";
+          }
+          
+          if (isSpectator && (v === 'admin' || v === 'scorekeeper')) {
+            btn.style.display = 'none';
+          } else if (appState.currentRole === 'Scorekeeper' && v === 'admin') {
+            btn.style.display = 'none';
+          } else {
+             btn.style.display = 'block';
+          }
+        }
+      });
+
+      const views = ['hub', 'overview', 'admin', 'scorekeeper', 'spectator'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) {
+          if (v === appState.currentView) {
+            el.classList.remove('hidden');
+          } else {
+            el.classList.add('hidden');
+          }
+        }
+      });
+
+      if (appState.currentView === 'hub') renderHub();
+      else if (appState.currentView === 'overview') renderOverview();
+      else if (appState.currentView === 'admin') renderAdmin();
+      else if (appState.currentView === 'scorekeeper') renderScorekeeper();
+      else if (appState.currentView === 'spectator') renderSpectator();
+    }
+
+    function filterHub(status) {
+      appState.hubFilter = status;
+      ['ALL', 'Live', 'Draft', 'Completed'].forEach(s => {
+        const btn = document.getElementById(`filter-btn-${s}`);
+        if (s === status) {
+          btn.className = "flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition bg-gold-500 text-maroon-950";
+        } else {
+          btn.className = "flex-1 md:flex-initial px-4 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition";
+        }
+      });
+      renderHubTournaments();
+    }
+
+    function renderHub() {
+      renderHubTournaments();
+    }
+
+    function renderHubTournaments() {
+      const grid = document.getElementById('hub-tourneys-grid');
+      const searchQuery = (document.getElementById('hub-search-input')?.value || '').toLowerCase();
+
+      let list = appState.tournaments;
+      if (appState.hubFilter !== 'ALL') {
+        list = list.filter(t => t.status === appState.hubFilter);
+      }
+
+      if (searchQuery) {
+        list = list.filter(t => t.name.toLowerCase().includes(searchQuery));
+      }
+
+      const isReadonly = appState.currentRole === 'Spectator';
+
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 maroon-card rounded-2xl border border-dashed border-maroon-700">
+            <i class="fa-solid fa-trophy text-4xl text-gray-600 mb-3"></i>
+            <p class="text-gray-400 font-medium text-sm">No tournaments found matching current criteria.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = list.map(t => {
+        const statusBadgeClasses = {
+          'Live': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+          'Draft': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+          'Completed': 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+        };
+
+        return `
+          <div class="maroon-card rounded-2xl p-5 border border-maroon-700 hover:border-gold-500/50 transition duration-300 flex flex-col justify-between group shadow-lg">
+            <div class="space-y-3">
+              <div class="flex justify-between items-start gap-2">
+                <span class="text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${statusBadgeClasses[t.status]} flex items-center gap-1.5 uppercase tracking-wider">
+                  <span class="w-1.5 h-1.5 rounded-full ${t.status === 'Live' ? 'bg-emerald-400 animate-pulse' : 'bg-current'}"></span>
+                  ${t.status}
+                </span>
+                <span class="text-xs text-gray-400 font-mono"><i class="fa-solid fa-layer-group text-gold-500 mr-1"></i> ${t.groupsCount} Groups</span>
+              </div>
+
+              <div>
+                <h3 class="text-xl font-bold text-white group-hover:text-gold-400 transition">${t.name}</h3>
+                <p class="text-xs text-gold-500/80 font-medium mt-0.5">${t.format}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-5 mt-4 border-t border-maroon-800/80">
+              <button onclick="selectAndNavigate('${t.id}', '${isReadonly ? 'spectator' : 'overview'}')" class="flex-1 bg-maroon-800 hover:bg-gold-500 hover:text-maroon-950 text-gold-400 font-bold py-2 rounded-xl text-xs border border-maroon-600 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-eye"></i> ${isReadonly ? 'View Live Event' : 'Open Dashboard'}
+              </button>
+              ${!isReadonly ? `
+                <button onclick="deleteTournament('${t.id}')" class="p-2 text-gray-500 hover:text-rose-400 transition rounded-xl hover:bg-maroon-950" title="Delete Tournament">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectAndNavigate(id, view) {
+      appState.activeTourneyId = id;
+      navigateTo(view);
+    }
+
+    function deleteTournament(id) {
+      if (confirm('Are you sure you want to delete this tournament? This cannot be undone.')) {
+        appState.tournaments = appState.tournaments.filter(t => t.id !== id);
+        if (appState.activeTourneyId === id) {
+          appState.activeTourneyId = appState.tournaments[0]?.id || null;
+        }
+        saveStateToLocalStorage();
+        renderApp();
+      }
+    }
+
+    function renderOverview() {
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      const container = document.getElementById('overview-content');
+
+      if (!tourney) {
+        container.innerHTML = `<p class="text-gray-400 text-center py-8">No active tournament selected.</p>`;
+        return;
+      }
+
+      const totalMatches = tourney.matches.length;
+      const completedMatches = tourney.matches.filter(m => m.completed).length;
+      const progressPercent = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0;
+      const isScorekeeper = appState.currentRole === 'Scorekeeper';
+
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="maroon-card rounded-2xl p-6 border border-maroon-600 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <h2 class="text-3xl font-black text-white">${tourney.name}</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-gold-500/20 text-gold-400 border border-gold-500/30">${tourney.status}</span>
+              </div>
+              <p class="text-sm text-gray-400"><i class="fa-solid fa-diagram-project text-gold-500 mr-1"></i> Format: <strong class="text-white">${tourney.format}</strong> | Top Advancing: <strong class="text-white">${tourney.advancingPerGroup || 'N/A'} per group</strong></p>
+            </div>
+            
+            <div class="flex gap-3 w-full md:w-auto">
+              ${!isScorekeeper ? `
+              <button onclick="navigateTo('admin')" class="flex-1 md:flex-initial gold-gradient-bg text-maroon-950 font-bold px-5 py-2.5 rounded-xl text-xs shadow hover:brightness-110 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-gear"></i> Admin Portal
+              </button>` : ''}
+              <button onclick="navigateTo('scorekeeper')" class="flex-1 md:flex-initial bg-maroon-800 text-gold-400 font-bold px-5 py-2.5 rounded-xl text-xs border border-maroon-600 hover:bg-maroon-700 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clipboard-check"></i> Scorekeeper
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="maroon-card rounded-2xl p-5 border border-maroon-700 space-y-2">
+            <div class="flex justify-between items-center text-xs font-bold">
+              <span class="text-gray-400 uppercase tracking-wider">Tournament Progress</span>
+              <span class="text-gold-400">${completedMatches} / ${totalMatches} Matches Completed (${progressPercent}%)</span>
+            </div>
+            <div class="w-full h-3 bg-maroon-950 rounded-full overflow-hidden p-0.5 border border-maroon-800">
+              <div class="h-full gold-gradient-bg rounded-full transition-all duration-500" style="width: ${progressPercent}%"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function switchAdminTab(tab) {
+      appState.currentAdminTab = tab;
+      ['setup', 'courts', 'standings', 'bracket'].forEach(t => {
+        const btn = document.getElementById(`admin-tab-${t}`);
+        const content = document.getElementById(`admin-content-${t}`);
+        if (t === tab) {
+          btn.className = "px-4 py-2 text-sm font-bold border-b-2 border-gold-500 text-gold-400 flex items-center gap-2";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2";
+          content.classList.add('hidden');
+        }
+      });
+      renderAdmin();
+    }
+
+    function renderAdmin() {
+      if (appState.currentRole !== 'Admin') {
+        document.getElementById(`admin-content-${appState.currentAdminTab}`).innerHTML = `
+          <div class="maroon-card rounded-2xl p-8 text-center border border-maroon-700 space-y-3">
+            <i class="fa-solid fa-lock text-4xl text-amber-500"></i>
+            <h3 class="text-lg font-bold text-white">Admin Privileges Required</h3>
+            <p class="text-xs text-gray-400">Please switch role to Admin to view this page.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      if (!tourney) return;
+
+      if (appState.currentAdminTab === 'setup') renderAdminSetup(tourney);
+      else if (appState.currentAdminTab === 'courts') renderAdminCourts(tourney);
+      else if (appState.currentAdminTab === 'standings') renderAdminStandings(tourney);
+      else if (appState.currentAdminTab === 'bracket') renderAdminBracket(tourney);
+    }
+
+    function renderAdminSetup(tourney) {
+      const container = document.getElementById('admin-content-setup');
+      container.innerHTML = `
+        <div class="maroon-card rounded-2xl p-6 border border-maroon-700 space-y-6">
+          <div class="flex justify-between items-center border-b border-maroon-800 pb-4">
+            <div>
+              <h3 class="text-lg font-extrabold text-white">Tournament Configuration & Setup</h3>
+              <p class="text-xs text-gray-400">Update format, standings rules, and status</p>
+            </div>
+            <button onclick="autoGenerateSchedule()" class="bg-maroon-800 text-gold-400 px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 border border-maroon-600 hover:bg-maroon-700 transition">
+              <i class="fa-solid fa-rotate"></i> Regenerate Match Schedule
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between bg-maroon-950 p-4 rounded-xl border border-maroon-800">
+            <div>
+              <span class="text-xs font-bold text-gray-400 uppercase">Current Tournament Status</span>
+              <div class="text-base font-bold text-white mt-0.5">${tourney.status}</div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="setTourneyStatus('${tourney.id}', 'Draft')" class="px-3 py-1.5 rounded-lg text-xs font-bold ${tourney.status === 'Draft' ? 'bg-amber-500 text-maroon-950' : 'bg-maroon-900 text-gray-400 border border-maroon-700'}">Draft</button>
+              <button onclick="setTourneyStatus('${tourney.id}', 'Live')" class="px-3 py-1.5 rounded-lg text-xs font-bold ${tourney.status === 'Live' ? 'bg-emerald-500 text-maroon-950' : 'bg-maroon-900 text-gray-400 border border-maroon-700'}">Live</button>
+              <button onclick="setTourneyStatus('${tourney.id}', 'Completed')" class="px-3 py-1.5 rounded-lg text-xs font-bold ${tourney.status === 'Completed' ? 'bg-gray-500 text-white' : 'bg-maroon-900 text-gray-400 border border-maroon-700'}">Completed</button>
+            </div>
+          </div>
+
+          <!-- Teams List -->
+          <div class="space-y-3">
+            <h4 class="text-sm font-bold text-gold-400 uppercase tracking-wider"><i class="fa-solid fa-list-ol mr-1"></i> Participating Teams</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              ${tourney.teams.map((tm, idx) => `
+                <div class="bg-maroon-950 p-3 rounded-xl border border-maroon-800 flex justify-between items-center">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400 text-xs flex items-center justify-center font-mono font-bold">${idx + 1}</span>
+                    <span class="text-xs font-bold text-white">${tm.name}</span>
+                  </div>
+                  <span class="text-[10px] text-gray-400 bg-maroon-900 px-2 py-0.5 rounded border border-maroon-800">Grp ${tm.group || 'A'}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminCourts(tourney) {
+      const container = document.getElementById('admin-matches-grid-container');
+      container.innerHTML = tourney.matches.map(m => renderMatchCard(m, true)).join('');
+    }
+
+    function renderAdminStandings(tourney) {
+      const container = document.getElementById('admin-content-standings');
+      container.innerHTML = renderStandingsTables(tourney);
+    }
+
+    function renderAdminBracket(tourney) {
+      const container = document.getElementById('admin-content-bracket');
+      container.innerHTML = `<div class="maroon-card rounded-2xl p-6 border border-maroon-700 text-center"><p class="text-gray-400 text-sm">Bracket auto-generation happens after group stages complete.</p></div>`;
+    }
+
+    function setTourneyStatus(id, status) {
+      const t = appState.tournaments.find(item => item.id === id);
+      if (t) {
+        t.status = status;
+        saveStateToLocalStorage();
+        renderApp();
+      }
+    }
+
+    function renderMatchCard(match, allowAdminControl = false) {
+      const statusBadge = match.completed 
+        ? `<span class="bg-gray-800 text-gray-300 text-[10px] px-2 py-0.5 rounded font-bold">FINAL</span>`
+        : `<span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded font-bold border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> SCHEDULED</span>`;
+
+      // Allow scoring defaults to Scorekeeper or Admin role being active
+      const canScore = ['Admin', 'Scorekeeper'].includes(appState.currentRole);
+
+      return `
+        <div class="maroon-card rounded-xl p-4 border border-maroon-700 space-y-3 relative hover:border-maroon-600 transition flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
+              <span class="font-bold text-gold-400"><i class="fa-solid fa-border-all mr-1"></i> Court ${match.court}</span>
+              <span class="font-bold text-gray-500">Rnd ${match.round}</span>
+              ${statusBadge}
+            </div>
+
+            <div class="space-y-2 py-1">
+              <div class="flex justify-between items-center p-2 rounded-lg ${match.winner === match.team1 ? 'bg-gold-500/10 border border-gold-500/30' : 'bg-maroon-950'}">
+                <span class="text-sm font-extrabold ${match.winner === match.team1 ? 'text-gold-400' : 'text-white'}">${match.team1 || 'TBD'}</span>
+                <span class="text-lg font-black font-mono ${match.winner === match.team1 ? 'text-gold-400' : 'text-gray-300'}">${match.score1 ?? '-'}</span>
+              </div>
+              <div class="flex justify-between items-center p-2 rounded-lg ${match.winner === match.team2 ? 'bg-gold-500/10 border border-gold-500/30' : 'bg-maroon-950'}">
+                <span class="text-sm font-extrabold ${match.winner === match.team2 ? 'text-gold-400' : 'text-white'}">${match.team2 || 'TBD'}</span>
+                <span class="text-lg font-black font-mono ${match.winner === match.team2 ? 'text-gold-400' : 'text-gray-300'}">${match.score2 ?? '-'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 pt-2 border-t border-maroon-800/80">
+            ${canScore ? `
+              <button onclick="openScoreModal('${match.id}')" class="col-span-full md:col-span-1 bg-maroon-800 hover:bg-gold-500 hover:text-maroon-950 text-gold-400 py-1.5 rounded-lg text-xs font-bold border border-maroon-600 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-pen"></i> Score
+              </button>
+            ` : ''}
+            ${allowAdminControl && appState.currentRole === 'Admin' ? `
+              <button onclick="openEditMatchupModal('${match.id}')" class="col-span-full ${canScore ? 'md:col-span-1' : ''} bg-maroon-950 text-gray-400 py-1.5 rounded-lg text-xs font-bold border border-maroon-700 hover:text-white transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-wrench"></i> Edit Teams
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderScorekeeper() {
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      const grid = document.getElementById('scorekeeper-matches-grid');
+      if (!tourney) return;
+
+      const pendingMatches = tourney.matches.filter(m => !m.completed);
+      if (pendingMatches.length === 0) {
+        grid.innerHTML = `<div class="col-span-full maroon-card p-8 text-center rounded-2xl border border-maroon-700"><h3 class="text-lg font-bold text-white">All Matches Completed!</h3></div>`;
+        return;
+      }
+      grid.innerHTML = pendingMatches.map(m => renderMatchCard(m, false)).join('');
+    }
+
+    function autoGenerateSchedule() {
+      if (!confirm('This will wipe all existing matches and scores and regenerate a new schedule. Are you sure?')) return;
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      
+      const groupNames = Array.from(new Set(tourney.teams.map(t => t.group)));
+      tourney.matches = generateOptimizedSchedule(tourney.teams, groupNames, tourney.courtsCount);
+      
+      // Reset standings
+      tourney.teams.forEach(t => { t.played = 0; t.won = 0; t.lost = 0; t.diff = 0; t.points = 0; });
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function generateOptimizedSchedule(teams, groupNames, courtsCount) {
+      let newMatches = [];
+      let matchIdCounter = 1;
+      let roundsData = []; 
+
+      // 1. Generate Round Robin combinations using Polygon method
+      groupNames.forEach(gName => {
+        let grpTeams = teams.filter(tm => tm.group === gName).map(t => t.name);
+        
+        if (grpTeams.length % 2 !== 0) {
+          grpTeams.push(null); // Add dummy BYE
+        }
+        
+        const numTeams = grpTeams.length;
+        const numRounds = numTeams - 1;
+        const half = numTeams / 2;
+
+        let indices = grpTeams.map((_, i) => i).slice(1);
+
+        for (let r = 0; r < numRounds; r++) {
+          if (!roundsData[r]) roundsData[r] = [];
+
+          let t1 = grpTeams[0];
+          let t2 = grpTeams[indices[indices.length - 1]];
+          if (t1 !== null && t2 !== null) roundsData[r].push({ group: gName, team1: t1, team2: t2 });
+
+          for (let i = 0; i < half - 1; i++) {
+            let p1 = grpTeams[indices[i]];
+            let p2 = grpTeams[indices[indices.length - 2 - i]];
+            if (p1 !== null && p2 !== null) roundsData[r].push({ group: gName, team1: p1, team2: p2 });
+          }
+          // Rotate array
+          indices.unshift(indices.pop());
+        }
+      });
+
+      // 2. Assign to specific courts linearly keeping rounds distinct
+      let globalRound = 1;
+      let currentCourt = 1;
+
+      roundsData.forEach(roundMatchList => {
+        roundMatchList.forEach(m => {
+          newMatches.push({
+            id: `m-${matchIdCounter++}`,
+            group: m.group,
+            team1: m.team1,
+            team2: m.team2,
+            court: currentCourt,
+            round: globalRound,
+            score1: null,
+            score2: null,
+            completed: false,
+            winner: null
+          });
+          currentCourt++;
+          if (currentCourt > courtsCount) {
+            currentCourt = 1;
+            globalRound++; // Move to next time slot
+          }
+        });
+        // Ensures full rest for next round grouping
+        if (currentCourt !== 1) {
+          currentCourt = 1;
+          globalRound++;
+        }
+      });
+
+      return newMatches;
+    }
+
+    let isEditingExistingMatch = false;
+
+    function openAddMatchupModal() {
+      isEditingExistingMatch = false;
+      document.getElementById('edit-matchup-title').innerHTML = `<i class="fa-solid fa-plus text-gold-500"></i> Add Custom Match`;
+      document.getElementById('edit-match-id').value = '';
+      document.getElementById('btn-delete-match').style.display = 'none';
+      
+      populateTeamDropdowns(null, null);
+      document.getElementById('edit-match-group').value = 'Playoff / Custom';
+      document.getElementById('edit-match-court').value = 1;
+      document.getElementById('edit-match-round').value = 99; // Default to late round
+
+      openModal('modal-edit-matchup');
+    }
+
+    function openEditMatchupModal(matchId) {
+      isEditingExistingMatch = true;
+      document.getElementById('edit-matchup-title').innerHTML = `<i class="fa-solid fa-wrench text-gold-500"></i> Edit Matchup Configuration`;
+      document.getElementById('btn-delete-match').style.display = 'flex';
+
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      const match = tourney.matches.find(m => m.id === matchId);
+
+      document.getElementById('edit-match-id').value = match.id;
+      document.getElementById('edit-match-group').value = match.group;
+      document.getElementById('edit-match-court').value = match.court;
+      document.getElementById('edit-match-round').value = match.round;
+      
+      populateTeamDropdowns(match.team1, match.team2);
+      openModal('modal-edit-matchup');
+    }
+
+    function populateTeamDropdowns(sel1, sel2) {
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      const selOptions = `<option value="">-- TBA / Unknown --</option>` + tourney.teams.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+      
+      const t1Select = document.getElementById('edit-match-team1');
+      const t2Select = document.getElementById('edit-match-team2');
+      
+      t1Select.innerHTML = selOptions;
+      t2Select.innerHTML = selOptions;
+
+      if (sel1) t1Select.value = sel1;
+      if (sel2) t2Select.value = sel2;
+    }
+
+    function saveMatchupConfiguration() {
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      
+      const t1 = document.getElementById('edit-match-team1').value || null;
+      const t2 = document.getElementById('edit-match-team2').value || null;
+      const grp = document.getElementById('edit-match-group').value || 'Custom';
+      const court = parseInt(document.getElementById('edit-match-court').value) || 1;
+      const round = parseInt(document.getElementById('edit-match-round').value) || 1;
+
+      if (isEditingExistingMatch) {
+        const id = document.getElementById('edit-match-id').value;
+        const match = tourney.matches.find(m => m.id === id);
+        match.team1 = t1;
+        match.team2 = t2;
+        match.group = grp;
+        match.court = court;
+        match.round = round;
+      } else {
+        tourney.matches.push({
+          id: `m-custom-${Date.now()}`,
+          group: grp,
+          team1: t1,
+          team2: t2,
+          court: court,
+          round: round,
+          score1: null,
+          score2: null,
+          completed: false,
+          winner: null
+        });
+      }
+
+      closeModal('modal-edit-matchup');
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function deleteMatchup() {
+      if(!confirm("Are you sure you want to delete this match entirely?")) return;
+      const id = document.getElementById('edit-match-id').value;
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      tourney.matches = tourney.matches.filter(m => m.id !== id);
+      
+      closeModal('modal-edit-matchup');
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function openCreateWizard() {
+      document.getElementById('wizard-title-text').innerText = "Create New Tournament";
+      document.getElementById('wiz-name').value = "MSJ Pickleball Cup 2026";
+      updateWizardDynamicStats();
+      openModal('modal-wizard');
+    }
+
+    function updateWizardDynamicStats() {
+      const groups = parseInt(document.getElementById('wiz-groups-count').value) || 2;
+      const tpg = parseInt(document.getElementById('wiz-teams-per-group').value) || 4;
+      const totalTeams = groups * tpg;
+      const matchesPerGroup = (tpg * (tpg - 1)) / 2;
+      
+      document.getElementById('wiz-stat-groups').innerText = groups;
+      document.getElementById('wiz-stat-tpg').innerText = tpg;
+      document.getElementById('wiz-stat-total-teams').innerText = totalTeams;
+      document.getElementById('wiz-stat-total-matches').innerText = (matchesPerGroup * groups);
+      document.getElementById('wiz-stat-rounds').innerText = (tpg % 2 === 0 ? tpg - 1 : tpg); // Math for RR rounds
+    }
+
+    function saveTournamentFromWizard() {
+      const name = document.getElementById('wiz-name').value.trim() || 'MSJ Tournament';
+      const format = document.getElementById('wiz-format').value;
+      const groupsCount = parseInt(document.getElementById('wiz-groups-count').value) || 2;
+      const tpg = parseInt(document.getElementById('wiz-teams-per-group').value) || 4;
+      const courtsCount = parseInt(document.getElementById('wiz-courts-count').value) || 4;
+      const advancingCount = parseInt(document.getElementById('wiz-advancing-per-group').value) || 2;
+      
+      const teams = [];
+      const groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+      let teamIdCounter = 1;
+
+      for (let g = 0; g < groupsCount; g++) {
+        for (let t = 0; t < tpg; t++) {
+          teams.push({
+            id: `team-${teamIdCounter}`,
+            name: `Team ${teamIdCounter}`,
+            group: groupNames[g % groupNames.length],
+            played: 0, won: 0, lost: 0, diff: 0, points: 0
+          });
+          teamIdCounter++;
+        }
+      }
+
+      const activeGroupNames = groupNames.slice(0, groupsCount);
+      const matches = generateOptimizedSchedule(teams, activeGroupNames, courtsCount);
+
+      const newTourney = {
+        id: `tourney-${Date.now()}`,
+        name: name,
+        format: format,
+        status: 'Draft',
+        groupsCount: groupsCount,
+        courtsCount: courtsCount,
+        advancingPerGroup: advancingCount,
+        teams: teams,
+        matches: matches
+      };
+
+      appState.tournaments.unshift(newTourney);
+      appState.activeTourneyId = newTourney.id;
+      closeModal('modal-wizard');
+      saveStateToLocalStorage();
+      navigateTo('overview');
+    }
+
+    function openScoreModal(matchId) {
+      activeScoringMatchId = matchId;
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      const match = tourney.matches.find(m => m.id === matchId);
+
+      const body = document.getElementById('score-modal-body');
+      body.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4 text-center">
+            <div class="bg-maroon-950 p-4 rounded-xl border border-maroon-800">
+              <div class="text-xs font-bold text-gold-400 mb-2 truncate">${match.team1 || 'TBD'}</div>
+              <input type="number" id="modal-score1" value="${match.score1 ?? 0}" min="0" max="50" class="w-full bg-maroon-900 border border-maroon-700 rounded-xl py-3 text-center text-3xl font-black text-white focus:border-gold-500 outline-none">
+            </div>
+            <div class="bg-maroon-950 p-4 rounded-xl border border-maroon-800">
+              <div class="text-xs font-bold text-gold-400 mb-2 truncate">${match.team2 || 'TBD'}</div>
+              <input type="number" id="modal-score2" value="${match.score2 ?? 0}" min="0" max="50" class="w-full bg-maroon-900 border border-maroon-700 rounded-xl py-3 text-center text-3xl font-black text-white focus:border-gold-500 outline-none">
+            </div>
+          </div>
+        </div>
+      `;
+      openModal('modal-score');
+    }
+
+    function submitMatchScore() {
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      const match = tourney.matches.find(m => m.id === activeScoringMatchId);
+
+      const s1 = parseInt(document.getElementById('modal-score1').value) || 0;
+      const s2 = parseInt(document.getElementById('modal-score2').value) || 0;
+
+      match.score1 = s1;
+      match.score2 = s2;
+      match.completed = true;
+      if(s1 > s2) match.winner = match.team1;
+      else if(s2 > s1) match.winner = match.team2;
+      else match.winner = null; // Tie
+
+      recalculateStandings(tourney);
+      closeModal('modal-score');
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function recalculateStandings(tourney) {
+      tourney.teams.forEach(t => {
+        t.played = 0; t.won = 0; t.lost = 0; t.diff = 0; t.points = 0;
+      });
+
+      tourney.matches.filter(m => m.completed).forEach(m => {
+        const t1 = tourney.teams.find(t => t.name === m.team1);
+        const t2 = tourney.teams.find(t => t.name === m.team2);
+
+        if (t1 && t2) {
+          t1.played++; t2.played++;
+          const diff = m.score1 - m.score2;
+          t1.diff += diff; t2.diff -= diff;
+
+          if (m.score1 > m.score2) { t1.won++; t1.points += 2; t2.lost++; }
+          else if (m.score2 > m.score1) { t2.won++; t2.points += 2; t1.lost++; }
+          else { t1.points += 1; t2.points += 1; } // Tie
+        }
+      });
+
+      tourney.teams.sort((a, b) => b.points - a.points || b.diff - a.diff);
+    }
+
+    function renderStandingsTables(tourney) {
+      const groups = {};
+      tourney.teams.forEach(t => {
+        const g = t.group || 'A';
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(t);
+      });
+
+      const adv = tourney.advancingPerGroup || 2;
+
+      return Object.keys(groups).sort().map(grpName => {
+        const list = groups[grpName];
+        return `
+          <div class="maroon-card rounded-2xl p-5 border border-maroon-700 space-y-3">
+            <h4 class="text-base font-extrabold text-white flex items-center justify-between">
+              <span><i class="fa-solid fa-trophy text-gold-500 mr-2"></i> Group ${grpName}</span>
+              <span class="text-xs text-emerald-400 font-normal">Top ${adv} advance</span>
+            </h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-maroon-800 text-gray-400 uppercase">
+                    <th class="py-2 px-3">Pos</th>
+                    <th class="py-2 px-3">Team</th>
+                    <th class="py-2 px-3 text-center">P</th>
+                    <th class="py-2 px-3 text-center">W</th>
+                    <th class="py-2 px-3 text-center">L</th>
+                    <th class="py-2 px-3 text-center">Diff</th>
+                    <th class="py-2 px-3 text-center">Pts</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-maroon-900">
+                  ${list.map((tm, i) => `
+                    <tr class="hover:bg-maroon-950/50 ${i < adv ? 'bg-emerald-500/10' : ''}">
+                      <td class="py-3 px-3 font-bold text-gold-400">${i + 1}</td>
+                      <td class="py-3 px-3 font-extrabold text-white">${tm.name}</td>
+                      <td class="py-3 px-3 text-center text-gray-300 font-mono">${tm.played || 0}</td>
+                      <td class="py-3 px-3 text-center text-emerald-400 font-mono font-bold">${tm.won || 0}</td>
+                      <td class="py-3 px-3 text-center text-rose-400 font-mono font-bold">${tm.lost || 0}</td>
+                      <td class="py-3 px-3 text-center font-mono ${tm.diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${tm.diff > 0 ? '+' : ''}${tm.diff || 0}</td>
+                      <td class="py-3 px-3 text-center font-black text-gold-400 text-sm font-mono">${tm.points || 0}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchSpectatorTab(tab) {
+      appState.currentSpectatorTab = tab;
+      ['live', 'standings', 'bracket'].forEach(t => {
+        const btn = document.getElementById(`spec-tab-${t}`);
+        const content = document.getElementById(`spectator-content-${t}`);
+        if (t === tab) {
+          btn.className = "px-4 py-2 text-sm font-bold border-b-2 border-gold-500 text-gold-400 flex items-center gap-2";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "px-4 py-2 text-sm font-bold border-b-2 border-transparent text-gray-400 hover:text-white flex items-center gap-2";
+          content.classList.add('hidden');
+        }
+      });
+      renderSpectator();
+    }
+
+    function renderSpectator() {
+      const tourney = appState.tournaments.find(t => t.id === appState.activeTourneyId);
+      if (!tourney) return;
+
+      document.getElementById('spectator-stats-header').innerHTML = `
+        <div class="maroon-card p-4 rounded-xl border border-maroon-700 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg"><i class="fa-solid fa-trophy"></i></div>
+          <div><div class="text-[10px] text-gray-400 uppercase font-bold">Top Points</div><div class="text-sm font-extrabold text-white">${tourney.teams[0]?.name || 'N/A'}</div></div>
+        </div>
+        <div class="maroon-card p-4 rounded-xl border border-maroon-700 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center text-lg"><i class="fa-solid fa-fire"></i></div>
+          <div><div class="text-[10px] text-gray-400 uppercase font-bold">Format Info</div><div class="text-sm font-extrabold text-white">${tourney.format}</div></div>
+        </div>
+      `;
+
+      if (appState.currentSpectatorTab === 'live') {
+        document.getElementById('spectator-content-live').innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${tourney.matches.map(m => renderMatchCard(m, false)).join('')}</div>`;
+      } else if (appState.currentSpectatorTab === 'standings') {
+        document.getElementById('spectator-content-standings').innerHTML = renderStandingsTables(tourney);
+      } else if (appState.currentSpectatorTab === 'bracket') {
+        document.getElementById('spectator-content-bracket').innerHTML = `<div class="maroon-card rounded-2xl p-6 border border-maroon-700 text-center"><p class="text-gray-400">Playoff bracket loads after groups.</p></div>`;
+      }
+    }
+
+    function loadDemoTourneys() {
+      const teams = [
+        { id: 't1', name: 'Apex Dinks', group: 'A', played: 0, won: 0, lost: 0, diff: 0, points: 0 },
+        { id: 't2', name: 'Spin Masters', group: 'A', played: 0, won: 0, lost: 0, diff: 0, points: 0 },
+        { id: 't3', name: 'Kitchen Royals', group: 'A', played: 0, won: 0, lost: 0, diff: 0, points: 0 },
+        { id: 't4', name: 'Lob City', group: 'B', played: 0, won: 0, lost: 0, diff: 0, points: 0 },
+        { id: 't5', name: 'Net Crashers', group: 'B', played: 0, won: 0, lost: 0, diff: 0, points: 0 },
+        { id: 't6', name: 'Baseline Racers', group: 'B', played: 0, won: 0, lost: 0, diff: 0, points: 0 }
+      ];
+      
+      const matches = generateOptimizedSchedule(teams, ['A', 'B'], 4);
+      matches[0].score1 = 11; matches[0].score2 = 6; matches[0].completed = true; matches[0].winner = matches[0].team1;
+
+      const demo1 = {
+        id: 'demo-1', name: 'MSJ Factory Open Championship', format: 'GroupStageKnockout', status: 'Live',
+        groupsCount: 2, courtsCount: 4, advancingPerGroup: 2,
+        teams: teams, matches: matches
+      };
+
+      appState.tournaments = [demo1];
+      appState.activeTourneyId = 'demo-1';
+      recalculateStandings(demo1);
+      saveStateToLocalStorage();
+      renderApp();
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  </script>
+</body>
+</html>
